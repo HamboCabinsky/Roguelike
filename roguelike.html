@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GUI-tar</title>
+  <style>
+    main {
+        max-width: 700px;
+        margin: auto;
+        max-height: 300px;
+        transform: translate(0%, 5%);
+        user-select: none;
+      }
+  </style>
+  <link rel="stylesheet" media="screen" href="defstylsh.css">
+  <link rel="shortcut icon" type="image/jpg" href="painty.jpg">
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="EntityComponentSystem.js"></script>
+</head>
+<body>
+  <div class="nav">
+      <a href="index.php">Home</a>
+      <a href="cards.php">Guessing Game</a>
+      <a class="active" href="GUI-tar.php">GUI-tar</a>
+      <a href="polyform.php">PolyForm</a>
+      <a href="featured.php">Featured Arts</a>
+  </div>
+  <br>
+  <section class="title-container">
+        <h1 id="title">Roguelike</h1>
+        <p class="sub-title">in development</p>
+  </section>
+  <main>
+  	<svg width = "700" height = "700" id="canvas"></svg>
+  </main>
+</body>
+
+<script>
+	const ecs = new EntityComponentSystem();
+	const positionComponent = {
+	   name: "position",
+	   state: {
+	     x: 0,
+	     y: 0
+	   }
+	 }
+	const textureComponent = {
+		name: "texture",
+		state: {
+			texture: "ravebub.png"
+		}
+	}
+	const collisionComponent = {
+		name: "collision",
+		state: {
+			collision_enabled: "true"
+		}
+	}
+
+	const textureProcessor = {
+	   name: "textureProcessor",
+	   component: "texture",
+	   update(component, entities) {
+	     for(texture of ecs.textures) texture.remove();
+	     ecs.textures = [];
+	     entities.forEach(entity => {
+	       let img = d3.select("#canvas").append('image')
+	       				.attr("xlink:href", entity.texture)
+	       				.attr("width", 64)
+	       				.attr("height", 64)
+	       				.attr("x", entity.x)
+	       				.attr("y", entity.y);
+	       ecs.textures.push(img);
+
+	     })
+	   }
+	 }
+	ecs.addComponent(positionComponent);
+	ecs.addComponent(textureComponent);
+	ecs.addComponent(collisionComponent);
+	ecs.addProcessor(textureProcessor);
+	let tileId = 0;
+	const player = ecs.createEntity("player", ["position", "texture"]);
+	player.x = 64;
+	player.y = 64;
+	const world = [];
+	let x = 0;
+	let y = 0;
+	let worldstr = 
+`1111111111
+1000000001
+1000000001
+1000001001
+1000000001
+1000000001
+1001000001
+1000000001
+1000000001
+1111111111`;
+
+	let rows = worldstr.split('\n');
+	let world_data = [];
+	for(row of rows)
+	{
+		world_data.push(row.split(''));
+	}
+	for(let row = 0; row < 10; row++)
+	{
+		world[row] = [];
+		for(let col = 0; col < 10; col++)
+		{
+			if(world_data[row][col] == '0')
+			{
+				world[row].push(ecs.createEntity("floor"+tileId, ["position", "texture"]));
+				world[row][col].texture = "floortile.png";
+			}
+			else if(world_data[row][col] == '1') {
+				world[row].push(ecs.createEntity("wall"+tileId, ["position", "texture", "collision"]));
+				world[row][col].texture = "walltile.png";
+		}
+			
+			world[row][col].x = x;
+			world[row][col].y = y;
+			ecs.addEntity(world[row][col]);
+			x += 64;
+		}
+		y += 64;
+		x = 0;
+	}
+	
+	ecs.addEntity(player);
+	ecs.update();
+	console.log(ecs);
+	document.addEventListener(
+	  "keydown",
+	  (event) => {
+	    const keyName = event.key;
+	    let player_pos = [player.x/64, player.y/64]
+	    if (keyName == "w") {
+	      if(world[player_pos[0]][player_pos[1]-1].collision_enabled != "true") player.y -= 64;
+	      ecs.update();
+	      return;
+	    }
+	    else if(keyName == "a") {
+	      if(world[player_pos[0]-1][player_pos[1]].collision_enabled != "true") player.x -= 64;
+	      ecs.update();
+	      return;
+	    }
+	    else if(keyName == "s") {
+	      if(world[player_pos[0]][player_pos[1]+1].collision_enabled != "true") player.y += 64;
+	      ecs.update();
+	      return;
+	    }
+	    else if(keyName == "d")
+	    {
+	      if(world[player_pos[0]+1][player_pos[1]].collision_enabled != "true") player.x += 64;
+	      ecs.update();
+	      return;
+	    }
+	  },
+	  false,
+	);
+</script>
+
+</html>
