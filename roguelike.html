@@ -49,7 +49,7 @@
 	const textureComponent = {
 		name: "texture",
 		state: {
-			texture: "ravebub.png"
+			texture: "rlresources/ravebub.png"
 		}
 	}
 	const collisionComponent = {
@@ -114,11 +114,11 @@
 			if(world_data[row][col] == '0')
 			{
 				world[row].push(ecs.createEntity("floor"+tileId, ["position", "texture"]));
-				world[row][col].texture = "floortile.png";
+				world[row][col].texture = "rlresources/floortile.png";
 			}
 			else if(world_data[row][col] == '1') {
 				world[row].push(ecs.createEntity("wall"+tileId, ["position", "texture", "collision"]));
-				world[row][col].texture = "walltile.png";
+				world[row][col].texture = "rlresources/walltile.png";
 		}
 			
 			world[row][col].x = x;
