@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GUI-tar</title>
+  <title>Roguelike</title>
   <style>
     main {
         max-width: 700px;
@@ -18,6 +18,7 @@
   <link rel="shortcut icon" type="image/jpg" href="painty.jpg">
   <script src="https://d3js.org/d3.v4.min.js"></script>
   <script src="EntityComponentSystem.js"></script>
+  <script src="rooms.js"></script>
 </head>
 <body>
   <div class="nav">
@@ -81,81 +82,177 @@
 	ecs.addComponent(textureComponent);
 	ecs.addComponent(collisionComponent);
 	ecs.addProcessor(textureProcessor);
+	let level = generate_level_data();
+	let currRoom = [16,16];
 	let tileId = 0;
 	const player = ecs.createEntity("player", ["position", "texture"]);
 	player.x = 64;
 	player.y = 64;
-	const world = [];
+	let room = [];
 	let x = 0;
 	let y = 0;
-	let worldstr = 
-`1111111111
-1000000001
-1000000001
-1000001001
-1000000001
-1000000001
-1001000001
-1000000001
-1000000001
-1111111111`;
 
-	let rows = worldstr.split('\n');
-	let world_data = [];
-	for(row of rows)
+	function generate_room(level, currRoom)
 	{
-		world_data.push(row.split(''));
-	}
-	for(let row = 0; row < 10; row++)
-	{
-		world[row] = [];
-		for(let col = 0; col < 10; col++)
-		{
-			if(world_data[row][col] == '0')
-			{
-				world[row].push(ecs.createEntity("floor"+tileId, ["position", "texture"]));
-				world[row][col].texture = "rlresources/floortile.png";
-			}
-			else if(world_data[row][col] == '1') {
-				world[row].push(ecs.createEntity("wall"+tileId, ["position", "texture", "collision"]));
-				world[row][col].texture = "rlresources/walltile.png";
-		}
-			
-			world[row][col].x = x;
-			world[row][col].y = y;
-			ecs.addEntity(world[row][col]);
-			x += 64;
-		}
-		y += 64;
 		x = 0;
+		y = 0;
+		room = [];
+		ecs.entities = [];
+		let room_str = getRoomByNumber(level[currRoom[0]][currRoom[1]]);
+		let entrances = getEntrances(room_str);
+		console.log(entrances);
+		let rows = room_str.split('\n');
+		let room_data = [];
+		for(row of rows)
+		{
+			room_data.push(row.split(''));
+		}
+		for(let row = 0; row < 10; row++)
+		{
+			room[row] = [];
+			for(let col = 0; col < 10; col++)
+			{
+				if(room_data[row][col] == '0')
+				{
+					room[row].push(ecs.createEntity("floor"+tileId, ["position", "texture"]));
+					room[row][col].texture = "rlresources/floortile.png";
+				}
+				else if(room_data[row][col] == '1') {
+					room[row].push(ecs.createEntity("wall"+tileId, ["position", "texture", "collision"]));
+					room[row][col].texture = "rlresources/walltile.png";
+				}
+				else if(room_data[row][col] == '2') {
+					room[row].push(ecs.createEntity("door"+tileId, ["position", "texture", "collision"]));
+					room[row][col].texture = "rlresources/doortile.png";
+				}
+				tileId++;
+				
+				room[row][col].x = x;
+				room[row][col].y = y;
+				ecs.addEntity(room[row][col]);
+				x += 64;
+			}
+			y += 64;
+			x = 0;
+		}
+
+		for(char of entrances)
+		{
+			if(char == 'N'){
+				let new_room = getRoomByNumber(level[currRoom[0]-1][currRoom[1]]);
+				let openings = getEntrances(new_room);
+				//if(!openings) continue;
+				if(!openings || !openings.includes("S"))
+				{ 
+					room[0][4].texture = "rlresources/dollablock.png";
+					room[0][5].texture = "rlresources/dollablock.png";
+				}
+			}
+			else if(char == 'S'){
+				let new_room = getRoomByNumber(level[currRoom[0]+1][currRoom[1]]);
+				let openings = getEntrances(new_room);
+				//if(!openings) continue;
+				if(!openings || !openings.includes("N"))
+				{ 
+					room[9][4].texture = "rlresources/dollablock.png";
+					room[9][5].texture = "rlresources/dollablock.png";
+				}
+			}
+			else if(char == 'E'){
+				let new_room = getRoomByNumber(level[currRoom[0]][currRoom[1]+1]);
+				let openings = getEntrances(new_room);
+				//if(!openings) continue;
+				if(!openings || !openings.includes("W"))
+				{ 
+					room[4][9].texture = "rlresources/dollablock.png";
+					room[5][9].texture = "rlresources/dollablock.png";
+				}
+			}
+			else if(char == 'W'){
+				let new_room = getRoomByNumber(level[currRoom[0]][currRoom[1]-1]);
+				let openings = getEntrances(new_room);
+				//if(!openings) continue;
+				if(!openings || !openings.includes("E"))
+				{ 
+					room[4][0].texture = "rlresources/dollablock.png";
+					room[5][0].texture = "rlresources/dollablock.png";
+				}
+			}
+		}
+		ecs.addEntity(player);
 	}
+
+	generate_room(level, currRoom);
 	
-	ecs.addEntity(player);
 	ecs.update();
-	console.log(ecs);
 	document.addEventListener(
 	  "keydown",
 	  (event) => {
 	    const keyName = event.key;
 	    let player_pos = [player.x/64, player.y/64]
 	    if (keyName == "w") {
-	      if(world[player_pos[0]][player_pos[1]-1].collision_enabled != "true") player.y -= 64;
+	      //player pos is in x-y format while room is in row,col format, so indicies are swapped
+	      if(room[player_pos[1]-1][player_pos[0]].collision_enabled != "true") player.y -= 64;
+	      if(room[player_pos[1]-1][player_pos[0]].name.includes("door")){
+	      	let conn_room = getRoomByNumber(level[currRoom[0]-1][currRoom[1]]);
+	      	let entrances = getEntrances(conn_room);
+	      	if(entrances.includes("S")){
+	      		console.log("door detected");
+	      		currRoom = [currRoom[0]-1, currRoom[1]];
+	      		generate_room(level, currRoom);
+	      		player.y += 448;
+	      	}
+	      }
 	      ecs.update();
 	      return;
 	    }
 	    else if(keyName == "a") {
-	      if(world[player_pos[0]-1][player_pos[1]].collision_enabled != "true") player.x -= 64;
+	      //player pos is in x-y format while room is in row,col format, so indicies are swapped
+	      if(room[player_pos[1]][player_pos[0]-1].collision_enabled != "true") player.x -= 64;
+	      if(room[player_pos[1]][player_pos[0]-1].name.includes("door")){
+	      	let conn_room = getRoomByNumber(level[currRoom[0]][currRoom[1]-1]);
+	      	let entrances = getEntrances(conn_room);
+	      	if(entrances.includes("E")){
+	      		console.log("door detected");
+	      		currRoom = [currRoom[0], currRoom[1]-1];
+	      		generate_room(level, currRoom);
+	      		player.x += 448;
+	      	}
+	      }
 	      ecs.update();
 	      return;
 	    }
 	    else if(keyName == "s") {
-	      if(world[player_pos[0]][player_pos[1]+1].collision_enabled != "true") player.y += 64;
+	      //player pos is in x-y format while room is in row,col format, so indicies are swapped
+	      if(room[player_pos[1]+1][player_pos[0]].collision_enabled != "true") player.y += 64;
+	      if(room[player_pos[1]+1][player_pos[0]].name.includes("door")){
+	      	let conn_room = getRoomByNumber(level[currRoom[0]+1][currRoom[1]]);
+	      	let entrances = getEntrances(conn_room);
+	      	if(entrances.includes("N")){
+	      		console.log("door detected");
+	      		currRoom = [currRoom[0]+1, currRoom[1]];
+	      		generate_room(level, currRoom);
+	      		player.y -= 448;
+	      	}
+	      }
 	      ecs.update();
 	      return;
 	    }
 	    else if(keyName == "d")
 	    {
-	      if(world[player_pos[0]+1][player_pos[1]].collision_enabled != "true") player.x += 64;
+	      //player pos is in x-y format while room is in row,col format, so indicies are swapped
+	      if(room[player_pos[1]][player_pos[0]+1].collision_enabled != "true") player.x += 64;
+	      if(room[player_pos[1]][player_pos[0]+1].name.includes("door")){
+	      	let conn_room = getRoomByNumber(level[currRoom[0]][currRoom[1]+1]);
+	      	let entrances = getEntrances(conn_room);
+	      	if(entrances.includes("W")){
+	      		console.log("door detected");
+	      		currRoom = [currRoom[0], currRoom[1]+1];
+	      		generate_room(level, currRoom);
+	      		player.x -= 448;
+	      	}
+
+	      }
 	      ecs.update();
 	      return;
 	    }
