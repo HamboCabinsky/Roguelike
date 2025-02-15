@@ -312,10 +312,10 @@ function getConnectingRoom(entrance)
 	}
 	else if(entrance == "E")
 	{
-		if(random < .125) return ["E", E];
-		else if(random < .25) return ["NE", NE];
-		else if(random < .375) return ["SE", SE];
-		else if(random < .5) return ["NSE", NSE];
+		if(random < .125) return ["W", W];
+		else if(random < .25) return ["NW", NW];
+		else if(random < .375) return ["SW", SW];
+		else if(random < .5) return ["NSW", NSW];
 		else if(random < .625) return ["EW", EW];
 		else if(random < .75) return ["NEW", NEW];
 		else if(random < .875) return ["SEW", SEW];
@@ -323,12 +323,12 @@ function getConnectingRoom(entrance)
 	}
 	else if(entrance == "W")
 	{
-		if(random < .125) return ["W", W];
-		else if(random < .25) return ["NW", NW];
-		else if(random < .375) return ["WE", WE];
-		else if(random < .5) return ["NWE", NWE];
-		else if(random < .625) return ["SW", SW];
-		else if(random < .75) return ["NSW", NSW];
+		if(random < .125) return ["E", E];
+		else if(random < .25) return ["NE", NE];
+		else if(random < .375) return ["EW", EW];
+		else if(random < .5) return ["NEW", NEW];
+		else if(random < .625) return ["SE", SE];
+		else if(random < .75) return ["NSE", NSE];
 		else if(random < .875) return ["SEW", SEW];
 		else return ["NSEW", NSEW];
 	}
@@ -339,46 +339,54 @@ function generate_snake(entrance,level,position)
 {
 	let room = null;
 	if(entrance == "N"){
-		if(position[1]-1 < 0) return;
-		if(level[position[0]][position[1]-1] == '0'){
+		if(position[1]-1 < 1) return;
+		if(level[position[1]-1][position[0]] == '0'){
 			room = getConnectingRoom("N");
-			level[position[0]][position[1]-1] = getRoomNumber(room[0]);
+			level[position[1]-1][position[0]] = getRoomNumber(room[0]);
+			console.log(room);
+			console.log(position);
 			for(char of room[0])
 			{
-				generate_snake(char, level, [position[0],position[1]-1]);
+				generate_snake(char, level, [position[0], position[1]-1]);
 			}
 		}
 	}
 	else if(entrance == "S"){
-		if(position[1]+1 > 31) return;
-		if(level[position[0]][position[1]+1] == '0'){
+		if(position[1]+1 > 30) return;
+		if(level[position[1]+1][position[0]] == '0'){
 			room = getConnectingRoom("S");
-			level[position[0]][position[1]+1] = getRoomNumber(room[0]);
+			level[position[1]+1][position[0]] = getRoomNumber(room[0]);
+			console.log(room);
+			console.log(position);
 			for(char of room[0])
 			{
-				generate_snake(char, level, [position[0],position[1]+1]);
+				generate_snake(char, level, [position[0], position[1]+1]);
 			}
 		}
 	}
 	else if(entrance == "E"){
-		if(position[0]+1 > 31) return;
-		if(level[position[0]+1][position[1]] == '0'){
+		if(position[0]+1 > 30) return;
+		if(level[position[1]][position[0]+1] == '0'){
 			room = getConnectingRoom("E");
-			level[position[0]+1][position[1]] = getRoomNumber(room[0]);
+			level[position[1]][position[0]+1] = getRoomNumber(room[0]);
+			console.log(room);
+			console.log(position);
 			for(char of room[0])
 			{
-				generate_snake(char, level, [position[0]+1,position[1]]);
+				generate_snake(char, level, [position[0]+1, position[1]]);
 			}
 		}
 	}
 	else if(entrance == "W"){
-		if(position[0] -1 < 0) return;
-		if(level[position[0]-1][position[1]] == '0'){
-			room = getConnectingRoom("E");
-			level[position[0]-1][position[1]] = getRoomNumber(room[0]);
+		if(position[0] -1 < 1) return;
+		if(level[position[1]][position[0]-1] == '0'){
+			room = getConnectingRoom("W");
+			level[position[1]][position[0]-1] = getRoomNumber(room[0]);
+			console.log(room);
+			console.log(position);
 			for(char of room[0])
 			{
-				generate_snake(char, level, [position[0]-1,position[1]]);
+				generate_snake(char, level, [position[0]-1, position[1]]);
 			}
 		}
 	}
