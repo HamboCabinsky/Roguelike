@@ -60,6 +60,22 @@
 		}
 	}
 
+	//chases given target entity every turn_count turns
+	const chaseComponent = {
+		name: "chase",
+		state: {
+			target: null,
+			turn_count: 1
+		}
+	}
+	const hostileComponent = {
+		name: "hostile",
+		state: {
+			hostile: true,
+			damage: 5
+		}
+	}
+
 	const textureProcessor = {
 	   name: "textureProcessor",
 	   component: "texture",
@@ -78,16 +94,41 @@
 	     })
 	   }
 	 }
+
+	 const chaseProcessor = {
+	   name: "chaseProcessor",
+	   component: "chase",
+	   update(component, entities) {
+	     entities.forEach(entity => {
+	     	 if(entity.x > entity.target.x+64) entity.x -= 64;
+	     	 if(entity.y > entity.target.y+64) entity.y -= 64;
+	     	 if(entity.x < entity.target.x-64) entity.x += 64;
+	     	 if(entity.y < entity.target.y-64) entity.y += 64;
+	     })
+	   }
+	 }
+
 	ecs.addComponent(positionComponent);
 	ecs.addComponent(textureComponent);
 	ecs.addComponent(collisionComponent);
+	ecs.addComponent(chaseComponent);
 	ecs.addProcessor(textureProcessor);
+	ecs.addProcessor(chaseProcessor);
 	let level = generate_level_data();
 	let currRoom = [16,16];
 	let tileId = 0;
 	const player = ecs.createEntity("player", ["position", "texture"]);
+	
+	let enemy_pos = [6,6];
+	let enemies = [];
+	for(let i = 0; i < 10; i++){
+		enemies.push([]);
+		for(let j = 0; j < 10; j++) enemies[i].push(null);
+	}
+	
 	player.x = 64;
 	player.y = 64;
+	
 	let room = [];
 	let x = 0;
 	let y = 0;
@@ -180,6 +221,31 @@
 			}
 		}
 		ecs.addEntity(player);
+		for(let i = 0; i < 10; i++)
+			for(let j = 0; j < 10; j++) if(enemies[i][j]) enemies[i][j] = null;
+		
+		let numEnemies = 0;
+		let enemiesChance = Math.random();
+		if(enemiesChance > .5) numEnemies = 1;
+		let enmyX = Math.floor(Math.random()*10);
+		let enmyY = Math.floor(Math.random()*10);
+		if(enmyX == 0) enmyX += 1;
+		if(enmyY == 0) enmyY += 1;
+		if(enmyX == 9) enmyX -= 1;
+		if(enmyY == 9) enmyY -= 1;
+		if(numEnemies) enemies[enmyY][enmyX] = ecs.createEntity("enemy", ["position", "texture", "chase"]);
+		for(let i = 0; i < 10; i++)
+			for(let j = 0; j < 10; j++) if(enemies[j][i] != null) ecs.addEntity(enemies[j][i])
+		//ecs.addEntity(enemy);
+		 if(enemies[enmyY][enmyX])
+		 {
+		 		ecs.addEntity(enemies[enmyY][enmyX]);
+			 enemies[enmyY][enmyX].texture = "rlresources/behemoth.png";
+			 enemies[enmyY][enmyX].target = player;
+			 enemies[enmyY][enmyX].x = enmyX*64;
+			 enemies[enmyY][enmyX].y = enmyY*64;
+		 }
+		 
 	}
 
 	generate_room(level, currRoom);
