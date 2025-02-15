@@ -34,7 +34,7 @@
         <p class="sub-title">in development</p>
   </section>
   <main>
-  	<svg width = "700" height = "700" id="canvas"></svg>
+  	<svg width = "900" height = "700" id="canvas"></svg>
   </main>
 </body>
 
@@ -94,13 +94,13 @@
 
 	function generate_room(level, currRoom)
 	{
+		console.log(currRoom);
 		x = 0;
 		y = 0;
 		room = [];
 		ecs.entities = [];
 		let room_str = getRoomByNumber(level[currRoom[0]][currRoom[1]]);
 		let entrances = getEntrances(room_str);
-		console.log(entrances);
 		let rows = room_str.split('\n');
 		let room_data = [];
 		for(row of rows)
